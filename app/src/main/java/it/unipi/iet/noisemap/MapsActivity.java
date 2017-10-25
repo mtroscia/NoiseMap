@@ -86,7 +86,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         Criteria criteria = new Criteria();
         String provider = locationManager.getBestProvider(criteria, true);
         Location location = locationManager.getLastKnownLocation(provider);
-        double lat = 0.0, lon = 0.0;
+        double lat = 0.0, lon = 0.0; 
         if (location != null) {
             lat = location.getLatitude();
             lon = location.getLongitude();
