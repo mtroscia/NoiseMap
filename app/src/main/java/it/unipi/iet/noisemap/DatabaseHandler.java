@@ -1,8 +1,5 @@
 package it.unipi.iet.noisemap;
 
-import android.media.AudioFormat;
-import android.media.AudioRecord;
-import android.media.MediaRecorder;
 import android.support.v4.util.ArrayMap;
 import android.util.Log;
 
@@ -13,9 +10,6 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
 import java.util.Map;
 
 import it.unipi.iet.noisemap.Utils.DatabaseEntry;
@@ -23,19 +17,6 @@ import it.unipi.iet.noisemap.Utils.DatabaseEntry;
 public class DatabaseHandler {
     private final static String TAG = "DatabaseHandler";
     private FirebaseDatabase database = null;
-
-    /*Map<String,String> toMap() {
-            Map<String,String> map = new ArrayMap<>();
-            map.put("timestamp", getTimestamp());
-            String coord = getLat()+"-"+getLon();
-            map.put("coordinates", coord);
-            String noise_s=String.format("%.1f", getNoise());
-            map.put("noise", noise_s);
-            map.put("activity", getActivity());
-            return map;
-        }
-
-    }*/
 
     public DatabaseHandler() {
         if (database==null)
