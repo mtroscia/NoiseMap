@@ -183,7 +183,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                     Log.d(TAG, "[MYDEBUG] Retrieved values are " + timestamp + " "+latt +"-" + lonn +
                             " " + noise + "dB " + activity);
-                    
+
                     MarkerOptions opt = new MarkerOptions()
                             .position(new LatLng(latt, lonn))
                             .visible(true)
