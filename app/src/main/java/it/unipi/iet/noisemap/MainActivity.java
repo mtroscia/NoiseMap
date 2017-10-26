@@ -33,7 +33,7 @@ public class MainActivity extends AppCompatActivity {
 
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED ||
                 ActivityCompat.checkSelfPermission(this, android.Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED)  {
-            Log.i(TAG, "[DEBUG] No permission granted\n");
+            Log.i(TAG, "[MYDEBUG] No permission granted\n");
             ActivityCompat.requestPermissions(this,
                     new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.RECORD_AUDIO},
                     MY_PERMISSIONS_REQUEST_ALL);
@@ -42,13 +42,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void buttonPress(View v) {
-        Log.d(TAG, "[DEBUG] In buttonPress()");
+        Log.d(TAG, "[MYDEBUG] In buttonPress()");
         Intent intent = new Intent(this, MapsActivity.class);
         startActivity(intent);
     }
 
     public void captureAudio(View v) {
-        Log.d(TAG, "[DEBUG] In captureAudio()");
+        Log.d(TAG, "[MYDEBUG] In captureAudio()");
         int bufferSize = AudioRecord.getMinBufferSize(44100, AudioFormat.CHANNEL_IN_DEFAULT,
                 AudioFormat.ENCODING_PCM_16BIT);
         bufferSize = bufferSize*4;
@@ -75,7 +75,7 @@ public class MainActivity extends AppCompatActivity {
         double pressure = measurement/51805.5336;
         double db = (20 * Math.log10(pressure/0.00002));
         String db_s = String.format("%.1f", db);
-        Log.d(TAG, "[DEBUG] Noise is "+db_s+"dB");
+        Log.d(TAG, "[MYDEBUG] Noise is "+db_s+"dB");
         TextView tv = (TextView) findViewById(R.id.text_view);
         if (tv != null) {
             tv.setText("Sensed noise is " + db_s + "dB\n");
@@ -111,8 +111,6 @@ public class MainActivity extends AppCompatActivity {
                                     });
                             alertDialog = alertDialogBuilder.create();
                             alertDialog.show();
-                        } else {
-                            //setMediaRecorder();
                         }
                     }
                 }

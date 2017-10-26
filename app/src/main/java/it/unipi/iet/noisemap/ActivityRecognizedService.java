@@ -17,19 +17,19 @@ import android.widget.Toast;
 import com.google.android.gms.location.ActivityRecognitionResult;
 import com.google.android.gms.location.DetectedActivity;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import it.unipi.iet.noisemap.Utils.DatabaseEntry;
 
 public class ActivityRecognizedService extends IntentService {
-    public static DetectedActivity mostProbableActivity = null;
     private final String TAG = "ActivityRecognizedServ";
     private Handler mHandler;
     private DatabaseHandler dbHandler;
 
     public ActivityRecognizedService() {
         super("ActivityRecognizedService");
-        Log.d(TAG, "[DEBUG] in ActivityRecognizedService()\n");
+        Log.d(TAG, "[MYDEBUG] in ActivityRecognizedService()\n");
         mHandler = new Handler();
         mHandler.post(new Runnable() {
             @Override
@@ -46,17 +46,17 @@ public class ActivityRecognizedService extends IntentService {
         //The method is invoked every time a new result is sensed.
         if (ActivityRecognitionResult.hasResult(intent)) {
             ActivityRecognitionResult result = ActivityRecognitionResult.extractResult(intent);
-            //handleDetectedActivities( result.getProbableActivities() );
-            mostProbableActivity = result.getMostProbableActivity();
-            Log.d(TAG, "[DEBUG] The most probable activity is "+activityToString(mostProbableActivity));
+            DetectedActivity mostProbableActivity = result.getMostProbableActivity();
+            Log.d(TAG, "[MYDEBUG] The most probable activity is "+activityToString(mostProbableActivity));
 
             if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
                     != PackageManager.PERMISSION_GRANTED) {
-                Log.w(TAG, "[DEBUG] Without permission you can't go on\n");
+                Log.w(TAG, "[MYDEBUG] Without permission you can't go on\n");
                 return;
             }
 
-            //TODO: HANDLE UNIQUE LOCATION AND CAPTURE AUDIO
+            // TODO: HANDLE UNIQUE LOCATION AND CAPTURE AUDIO
+            // Obtain the location
             LocationManager locationManager = (LocationManager)getSystemService(LOCATION_SERVICE);
             Criteria criteria = new Criteria();
             String provider = locationManager.getBestProvider(criteria, true);
@@ -64,6 +64,7 @@ public class ActivityRecognizedService extends IntentService {
             double lat = location.getLatitude();
             double lon = location.getLongitude();
 
+            // Obtain the noise
             int bufferSize = AudioRecord.getMinBufferSize(44100, AudioFormat.CHANNEL_IN_DEFAULT, AudioFormat.ENCODING_PCM_16BIT);
             bufferSize = bufferSize * 4;
             AudioRecord recorder = new AudioRecord(MediaRecorder.AudioSource.MIC,
@@ -81,19 +82,23 @@ public class ActivityRecognizedService extends IntentService {
                     bufferSize--;
             }
             double x = average / bufferSize;
-            //String x_s = String.format("%.1f", x);
 
-            //Calculating the Pascal pressure based on the idea that the max amplitude
-            //(between 0 and 32767) is relative to the pressure.
-            //The value 51805.5336 can be derived from assuming that x=32767=0.6325Pa and
-            //x=1=0.00002Pa (the reference value)
+            /*Calculating the Pascal pressure based on the idea that the max amplitude
+            (between 0 and 32767) is relative to the pressure.
+            The value 51805.5336 can be derived from assuming that x=32767=0.6325Pa and
+            x=1=0.00002Pa (the reference value)*/
             double pressure = x / 51805.5336;
             double noise = (20 * Math.log10(pressure / 0.00002));
 
-            DatabaseEntry e = new DatabaseEntry(new Date().toString(), lat, lon, noise, activityToString(mostProbableActivity));
+            //Obtain the timestamp
+            SimpleDateFormat sdfDate = new SimpleDateFormat("EEE, d MMM yyyy, HH:mm:ss");
+            Date date = new Date();
+            String strDate = sdfDate.format(date);
+
+            DatabaseEntry e = new DatabaseEntry(strDate, lat, lon, noise, activityToString(mostProbableActivity));
 
             // [REDUCE COMPUTATIONS WHILE DEBUGGING]
-            // dbHandler.insertIntoDatabase("myDB", e);
+            //dbHandler.insertIntoDatabase("myDB", e);
         }
     }
 
