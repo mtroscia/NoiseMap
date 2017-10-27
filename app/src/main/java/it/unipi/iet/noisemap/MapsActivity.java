@@ -232,7 +232,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         PendingIntent pendingIntent = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         // [REDUCE COMPUTATIONS WHILE DEBUGGING]
-        //ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(mApiClient, 60000, pendingIntent);
+        ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(mApiClient, 60000, pendingIntent);
     }
 
     @Override

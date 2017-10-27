@@ -23,6 +23,7 @@ import java.util.Date;
 import it.unipi.iet.noisemap.Utils.DatabaseEntry;
 
 public class ActivityRecognizedService extends IntentService {
+    public static int count = 0;
     private final String TAG = "ActivityRecognizedServ";
     private Handler mHandler;
     private DatabaseHandler dbHandler;
@@ -52,6 +53,16 @@ public class ActivityRecognizedService extends IntentService {
             if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
                     != PackageManager.PERMISSION_GRANTED) {
                 Log.w(TAG, "[MYDEBUG] Without permission you can't go on\n");
+                return;
+            }
+
+            if (activityToString(mostProbableActivity).equals("still"))
+                count++;
+            else
+                count = 0;
+
+            if (count==3 || activityToString(mostProbableActivity).equals("tilting") || activityToString(mostProbableActivity).equals("unknown")) {
+                Log.d(TAG, "Count equal to 2 ("+count+") or strange activity ("+activityToString(mostProbableActivity)+")");
                 return;
             }
 
@@ -98,7 +109,7 @@ public class ActivityRecognizedService extends IntentService {
             DatabaseEntry e = new DatabaseEntry(strDate, lat, lon, noise, activityToString(mostProbableActivity));
 
             // [REDUCE COMPUTATIONS WHILE DEBUGGING]
-            //dbHandler.insertIntoDatabase("myDB", e);
+            dbHandler.insertIntoDatabase("myDB", e);
         }
     }
 
