@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <CheckBoxPreference
+        android:key="running"
+        android:title="@string/running_enabled"
+        android:summary="Share noise's measurements collected by your phone"
+        android:defaultValue="true" />
+    <ListPreference
+        android:key="interval"
+        android:title="@string/title_interval"
+        android:summary="How often noise's measurements are taken"
+        android:defaultValue="300000"
+        android:entries="@array/intervals_keys"
+        android:entryValues="@array/intervals_values" />
+    <CheckBoxPreference
+        android:key="power_saving"
+        android:title="@string/power_saving"
+        android:summary="Stop sharing measurements when the phone's battery is below 30%"
+        android:defaultValue="true" />
+</PreferenceScreen>

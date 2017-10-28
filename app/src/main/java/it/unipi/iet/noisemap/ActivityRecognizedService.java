@@ -72,6 +72,10 @@ public class ActivityRecognizedService extends IntentService {
             Criteria criteria = new Criteria();
             String provider = locationManager.getBestProvider(criteria, true);
             Location location = locationManager.getLastKnownLocation(provider);
+            if (location==null) {
+                Log.d(TAG, "[MYDEBUG] No information about the location available");
+                return;
+            }
             double lat = location.getLatitude();
             double lon = location.getLongitude();
 
@@ -109,7 +113,7 @@ public class ActivityRecognizedService extends IntentService {
             DatabaseEntry e = new DatabaseEntry(strDate, lat, lon, noise, activityToString(mostProbableActivity));
 
             // [REDUCE COMPUTATIONS WHILE DEBUGGING]
-            dbHandler.insertIntoDatabase("myDB", e);
+            //dbHandler.insertIntoDatabase("myDB", e);
         }
     }
 

@@ -1,6 +1,11 @@
 <resources>
     <string name="app_name">NoiseMap</string>
     <string name="action_settings">Settings</string>
+    <string name="title_activity_main">Main</string>
     <string name="title_activity_maps">Map</string>
+    <string name="title_activity_settings">Settings</string>
     <string name="action_close">Close</string>
+    <string name="running_enabled">Share your measurements</string>
+    <string name="title_interval">Frequency of sampling</string>
+    <string name="power_saving">Enable power saving</string>
 </resources>
