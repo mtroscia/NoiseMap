@@ -31,7 +31,6 @@
         </activity>
 
         <activity
-            android:parentActivityName=".MainActivity"
             android:name="it.unipi.iet.noisemap.MapsActivity"
             android:theme="@style/AppTheme.NoActionBar"
             android:label="@string/title_activity_maps"></activity>

@@ -12,6 +12,7 @@ public class SettingsActivity extends AppCompatActivity implements SharedPrefere
     private final String TAG = "SettingsActivity";
     public static boolean DEFAULT_RUNNING = true;
     public static String DEFAULT_INTERVAL = "300000";
+    private SingletonClass singleton;
 
     @Override
     protected  void  onCreate(Bundle savedInstanceState)  {
@@ -28,6 +29,8 @@ public class SettingsActivity extends AppCompatActivity implements SharedPrefere
         getFragmentManager().beginTransaction()
                 .replace(android.R.id.content, new SettingsFragment())
                 .commit();
+
+        singleton = SingletonClass.getInstance();
 
         SharedPreferences  sp  = PreferenceManager.getDefaultSharedPreferences(this);
         sp.registerOnSharedPreferenceChangeListener(this);
@@ -51,14 +54,10 @@ public class SettingsActivity extends AppCompatActivity implements SharedPrefere
         Log.d(TAG,  "[MYDEBUG] Preference changed");
         SharedPreferences  sp =  PreferenceManager.getDefaultSharedPreferences(this);
         boolean  running  =  sp.getBoolean("running",  SettingsActivity.DEFAULT_RUNNING);
-        Log.d(TAG,  "[MYDEBUG] Service state: running="+running);
         if (running)  {
-            String  is =  sp.getString("interval",  SettingsActivity.DEFAULT_INTERVAL);
-            long  interval  =  Long.parseLong(is);
-            Log.d(TAG,  "[MYDEBUG] Interval="+interval);
-            /*Intent intent  =  new  Intent(this,  ActivityRecognizedService.class);
-            PendingIntent pi  =  PendingIntent.getService(this,  0,  intent,  PendingIntent.FLAG_UPDATE_CURRENT);
-            ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(mApiClient, 60000, pi);*/
+            singleton.scheduleServiceStart(this);
+        } else {
+            singleton.scheduleServiceStop();
         }
     }
 
