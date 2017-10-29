@@ -16,7 +16,7 @@
         android:layout_gravity="center_vertical|center_horizontal"
         android:background="@color/colorAccent"
         android:onClick="captureAudio"
-        android:text="COLLECT"
+        android:text="@string/button_text"
         android:textSize="22sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"

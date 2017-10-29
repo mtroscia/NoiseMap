@@ -7,4 +7,5 @@
     <string name="running_enabled">Share your measurements</string>
     <string name="title_interval">Frequency of sampling</string>
     <string name="power_saving">Enable power saving</string>
+    <string name="button_text">COLLECT NOW!</string>
 </resources>
