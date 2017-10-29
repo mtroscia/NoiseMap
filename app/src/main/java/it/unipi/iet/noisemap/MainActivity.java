@@ -144,8 +144,8 @@ public class MainActivity extends AppCompatActivity {
             startActivity(intent);
             return true;
         } else if (id == R.id.action_close) {
-            //TODO: STUFF WHEN CLOSE IS PRESSED
             Log.d(TAG, "[MYDEBUG] Close has been selected");
+            finish();
             return true;
         }
 

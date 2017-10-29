@@ -1,13 +1,10 @@
 package it.unipi.iet.noisemap;
 
-import android.app.Activity;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.preference.PreferenceActivity;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.MenuItem;
 
@@ -21,16 +18,12 @@ public class SettingsActivity extends AppCompatActivity implements SharedPrefere
         Log.d(TAG, "[MYDEBUG] onCreate()");
         super.onCreate(savedInstanceState);
 
-        setContentView(R.layout.settings);
-        //TODO: UNDERSTAND WHY IT CRASHES
-        /*Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar2);
-        if (toolbar!=null)
-            setSupportActionBar(toolbar);
-        // add back arrow to toolbar
+        setContentView(R.layout.activity_settings);
+
         if (getSupportActionBar() != null){
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setDisplayShowHomeEnabled(true);
-        }*/
+        }
 
         getFragmentManager().beginTransaction()
                 .replace(android.R.id.content, new SettingsFragment())
@@ -54,6 +47,7 @@ public class SettingsActivity extends AppCompatActivity implements SharedPrefere
     }
 
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        //TODO: handle onSharedPreferenceChanged
         Log.d(TAG,  "[MYDEBUG] Preference changed");
         SharedPreferences  sp =  PreferenceManager.getDefaultSharedPreferences(this);
         boolean  running  =  sp.getBoolean("running",  SettingsActivity.DEFAULT_RUNNING);
