@@ -1,11 +1,13 @@
-package it.unipi.iet.noisemap;
+package it.unipi.iet.noisemap.Services;
 
 import android.app.IntentService;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationManager;
+import android.os.BatteryManager;
 import android.os.Handler;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
@@ -18,6 +20,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import it.unipi.iet.noisemap.Utils.DatabaseEntry;
+import it.unipi.iet.noisemap.Utils.SingletonClass;
 
 public class ActivityRecognizedService extends IntentService {
     private final String TAG = "ActivityRecognizedServ";
@@ -48,13 +51,6 @@ public class ActivityRecognizedService extends IntentService {
         if (ActivityRecognitionResult.hasResult(intent)) {
             ActivityRecognitionResult result = ActivityRecognitionResult.extractResult(intent);
             DetectedActivity mostProbableActivity = result.getMostProbableActivity();
-            Log.d(TAG, "[MYDEBUG] The most probable activity is "+activityToString(mostProbableActivity));
-
-            if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
-                    != PackageManager.PERMISSION_GRANTED) {
-                Log.w(TAG, "[MYDEBUG] Without permission you can't go on\n");
-                return;
-            }
 
             if (activityToString(mostProbableActivity).equals("still"))
                 singleton.incrementCount();
@@ -62,9 +58,25 @@ public class ActivityRecognizedService extends IntentService {
                 singleton.setCount(0);
 
             if (singleton.getCount()==3 || activityToString(mostProbableActivity).equals("tilting") || activityToString(mostProbableActivity).equals("unknown")) {
-                Log.d(TAG, "Count equal to 2 ("+singleton.getCount()+") or strange activity ("+activityToString(mostProbableActivity)+")");
+                Log.d(TAG, "[MYDEBUG] Count equal to 2 ("+singleton.getCount()+") or strange activity ("+activityToString(mostProbableActivity)+")");
                 return;
             }
+
+            IntentFilter intentFilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+            Intent batteryStatus = getApplicationContext().registerReceiver(null, intentFilter);
+            int status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
+            if (BatteryManager.BATTERY_STATUS_CHARGING==status || BatteryManager.BATTERY_STATUS_FULL==status) {
+                Log.d(TAG, "[MYDEBUG] Phone is attached to power source");
+                return;
+            }
+
+            if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
+                    != PackageManager.PERMISSION_GRANTED) {
+                Log.w(TAG, "[MYDEBUG] Without permission you can't go on\n");
+                return;
+            }
+
+            Log.d(TAG, "[MYDEBUG] The most probable activity is "+activityToString(mostProbableActivity));
 
             // TODO: HANDLE UNIQUE LOCATION
             // Obtain the location
@@ -89,7 +101,7 @@ public class ActivityRecognizedService extends IntentService {
 
             //Generate a new entry
             DatabaseEntry e = new DatabaseEntry(strDate, lat, lon, noise, activityToString(mostProbableActivity));
-            Log.d(TAG, "New entry generated "+e);
+            Log.d(TAG, "[MYDEBUG] New entry generated "+e);
 
             //Insert into the DB
             // [REDUCE COMPUTATIONS WHILE DEBUGGING]

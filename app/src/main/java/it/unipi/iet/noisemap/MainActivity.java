@@ -3,6 +3,8 @@ package it.unipi.iet.noisemap;
 import android.Manifest;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -16,6 +18,8 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
+
+import it.unipi.iet.noisemap.Utils.SingletonClass;
 
 public class MainActivity extends AppCompatActivity {
     private final String TAG = "MainActivity";
@@ -33,6 +37,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_main);
+        setRequestedOrientation (ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setTitle("NoiseMap");
@@ -53,6 +58,11 @@ public class MainActivity extends AppCompatActivity {
         //Start the service
         singleton.scheduleServiceStart(getApplicationContext());
         Log.d(TAG, "Service start has been scheduled");
+
+        SharedPreferences sp  = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean powerSaving = sp.getBoolean("powerSaving", SettingsActivity.DEFAULT_POWER_SAVING);
+        if (!powerSaving)
+            singleton.unregisterReceiver();
     }
 
     public void buttonPress(View v) {

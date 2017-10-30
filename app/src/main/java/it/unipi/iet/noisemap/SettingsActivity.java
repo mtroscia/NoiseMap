@@ -1,6 +1,7 @@
 package it.unipi.iet.noisemap;
 
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
@@ -8,10 +9,13 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.MenuItem;
 
+import it.unipi.iet.noisemap.Utils.SingletonClass;
+
 public class SettingsActivity extends AppCompatActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
     private final String TAG = "SettingsActivity";
     public static boolean DEFAULT_RUNNING = true;
     public static String DEFAULT_INTERVAL = "300000";
+    public static boolean DEFAULT_POWER_SAVING = true;
     private SingletonClass singleton;
 
     @Override
@@ -20,7 +24,7 @@ public class SettingsActivity extends AppCompatActivity implements SharedPrefere
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_settings);
-
+        setRequestedOrientation (ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         if (getSupportActionBar() != null){
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setDisplayShowHomeEnabled(true);
@@ -50,14 +54,23 @@ public class SettingsActivity extends AppCompatActivity implements SharedPrefere
     }
 
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        //TODO: handle onSharedPreferenceChanged
         Log.d(TAG,  "[MYDEBUG] Preference changed");
         SharedPreferences  sp =  PreferenceManager.getDefaultSharedPreferences(this);
         boolean  running  =  sp.getBoolean("running",  SettingsActivity.DEFAULT_RUNNING);
         if (running)  {
+            Log.d(TAG, "[MYDEBUG] Schedule service start");
             singleton.scheduleServiceStart(this);
         } else {
+            Log.d(TAG, "[MYDEBUG] Schedule service stop");
             singleton.scheduleServiceStop();
+        }
+        boolean powerSaving = sp.getBoolean("power_saving", SettingsActivity.DEFAULT_POWER_SAVING);
+        if (powerSaving) {
+            Log.d(TAG, "[MYDEBUG] Enable power management");
+            singleton.registerReceiver();
+        } else {
+            Log.d(TAG, "[MYDEBUG] Disable power management");
+            singleton.unregisterReceiver();
         }
     }
 

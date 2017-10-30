@@ -1,18 +1,22 @@
-package it.unipi.iet.noisemap;
+package it.unipi.iet.noisemap.Utils;
 
 import android.app.PendingIntent;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.os.Bundle;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.util.ArrayMap;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -26,7 +30,9 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.util.Map;
 
-import it.unipi.iet.noisemap.Utils.DatabaseEntry;
+import it.unipi.iet.noisemap.Receivers.PowerManagementReceiver;
+import it.unipi.iet.noisemap.Services.ActivityRecognizedService;
+import it.unipi.iet.noisemap.SettingsActivity;
 
 public class SingletonClass implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener{
     private final static String TAG = "SingletonClass";
@@ -36,6 +42,9 @@ public class SingletonClass implements GoogleApiClient.ConnectionCallbacks, Goog
     private FirebaseDatabase database = null;
     private AudioRecord audioRecorder = null;
     private GoogleApiClient mApiClient = null;
+    private boolean serviceRunning;
+    private boolean receiverSet = true;
+    private Handler mHandler = new Handler();
 
     public SingletonClass() {
     }
@@ -68,6 +77,9 @@ public class SingletonClass implements GoogleApiClient.ConnectionCallbacks, Goog
             mApiClient.connect();
             Log.d(TAG, "[MYDEBUG] Obtained reference to GoogleApiClient\n");
         } else {
+            if (serviceRunning)
+                return;
+            serviceRunning = true;
             Intent intent = new Intent(context, ActivityRecognizedService.class);
             PendingIntent pendingIntent = PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
             ActivityRecognition.ActivityRecognitionApi.removeActivityUpdates(mApiClient, pendingIntent);
@@ -84,10 +96,56 @@ public class SingletonClass implements GoogleApiClient.ConnectionCallbacks, Goog
     }
 
     public void scheduleServiceStop() {
+        if (!serviceRunning)
+            return;
+        serviceRunning = false;
         Intent intent = new Intent(context, ActivityRecognizedService.class);
         PendingIntent pendingIntent = PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         ActivityRecognition.ActivityRecognitionApi.removeActivityUpdates(mApiClient, pendingIntent);
         Log.d(TAG, "[MYDEBUG] Service has been stopped\n");
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                CharSequence text = "Activity recognition stopped";
+                Toast.makeText(context, text, Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    public void registerReceiver() {
+        Log.d(TAG, "[MYDEBUG] In registerReceiver");
+        if (receiverSet)
+            return;
+        receiverSet = true;
+        ComponentName receiver = new ComponentName(context, PowerManagementReceiver.class);
+        PackageManager pm = context.getPackageManager();
+        pm.setComponentEnabledSetting(receiver, PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP);
+        Log.d(TAG, "[MYDEBUG] Receiver is registered");
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                CharSequence text = "Power management started";
+                Toast.makeText(context, text, Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    public void unregisterReceiver() {
+        Log.d(TAG, "[MYDEBUG] In unregisterReceiver");
+        if (!receiverSet)
+            return;
+        receiverSet = false;
+        ComponentName receiver = new ComponentName(context, PowerManagementReceiver.class);
+        PackageManager pm = context.getPackageManager();
+        pm.setComponentEnabledSetting(receiver, PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
+        Log.d(TAG, "[MYDEBUG] Receiver is unregistered");
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                CharSequence text = "Power management stopped";
+                Toast.makeText(context, text, Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     public double captureAudio() {
@@ -179,6 +237,7 @@ public class SingletonClass implements GoogleApiClient.ConnectionCallbacks, Goog
         SharedPreferences sp =  PreferenceManager.getDefaultSharedPreferences(context);
         boolean  running  =  sp.getBoolean("running",  SettingsActivity.DEFAULT_RUNNING);
         if (running) {
+            serviceRunning = true;
             String is = sp.getString("interval", SettingsActivity.DEFAULT_INTERVAL);
             long interval = Long.parseLong(is);
             Log.d(TAG, "[MYDEBUG] Chosen interval="+interval);
