@@ -149,7 +149,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     double timeDiff = new Date().getTime()-d.getTime();
                     if (timeDiff>5*24*60*60) {
                         //it is more than 5 days old
-                        Log.d(TAG, "Very old measurement");
+                        Log.d(TAG, "[MYDEBUG] Very old measurement: more than 5 days old");
                         return;
                     } else if (timeDiff>2*24*60*60 && timeDiff<=5*24*60*60)
                         opacity = 0.5f;
@@ -176,9 +176,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     Log.d(TAG, "[MYDEBUG] Last location not available");
                     return;
                 }
-                if (myPos.distanceTo(pointPos)>5000) {
+                float distance = myPos.distanceTo(pointPos);
+                if (distance>5000) {
                     //distance in metres
-                    Log.d(TAG, "Very far point");
+                    Log.d(TAG, "[MYDEBUG] Very far point: more than 5Km far");
                     return;
                 }
 
@@ -197,7 +198,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                         .alpha(opacity)
                         .flat(true)
                         .title(timestamp)
-                        .snippet("Noise: "+noise+"dB\n"+"Activity: "+activity+"\n");
+                        .snippet("Noise: "+noise+"dB\n"+"Activity: "+activity+"\n"
+                        +"Distance from your position: "+(int)distance+"m\n");
                 if (noise>65)
                     opt.icon(BitmapDescriptorFactory.fromResource(R.drawable.circle_red));
                 else if (noise>50 && noise<=65)

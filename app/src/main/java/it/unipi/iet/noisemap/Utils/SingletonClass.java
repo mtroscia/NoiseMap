@@ -36,15 +36,21 @@ import it.unipi.iet.noisemap.SettingsActivity;
 
 public class SingletonClass implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener{
     private final static String TAG = "SingletonClass";
-    private static int count = 0;
     private static SingletonClass singleton = null;
+
     private Context context;
     private FirebaseDatabase database = null;
     private AudioRecord audioRecorder = null;
     private GoogleApiClient mApiClient = null;
-    private boolean serviceRunning;
-    private boolean receiverSet = true;
     private Handler mHandler = new Handler();
+
+    private boolean serviceRunning;
+    private boolean receiverSet = true; //by default, it is true as it is in the manifest
+    private static int count = 0;
+    private String lastActivity = null;
+    private String lastAddress = null;
+    private String lastNoise = null;
+    private String lastTimestamp = null;
 
     public SingletonClass() {
     }
@@ -63,7 +69,11 @@ public class SingletonClass implements GoogleApiClient.ConnectionCallbacks, Goog
         }
     }
 
-    public void scheduleServiceStart(Context context) {
+    public void setServiceRunning(boolean serviceRunning) {
+        this.serviceRunning = serviceRunning;
+    }
+
+    public void scheduleServiceStart(final Context context) {
         Log.d(TAG, "[MYDEBUG] Service is going to be started\n");
         this.context = context;
 
@@ -91,6 +101,13 @@ public class SingletonClass implements GoogleApiClient.ConnectionCallbacks, Goog
                 Log.d(TAG, "Chosen interval="+interval);
                 ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(mApiClient, interval, pendingIntent);
                 Log.d(TAG, "[MYDEBUG] Service has been started\n");
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        CharSequence text = "Activity recognition started";
+                        Toast.makeText(context, text, Toast.LENGTH_LONG).show();
+                    }
+                });
             }
         }
     }
@@ -243,6 +260,13 @@ public class SingletonClass implements GoogleApiClient.ConnectionCallbacks, Goog
             Log.d(TAG, "[MYDEBUG] Chosen interval="+interval);
             ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(mApiClient, interval, pendingIntent);
             Log.d(TAG, "[MYDEBUG] Service has been started\n");
+            mHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    CharSequence text = "Activity recognition started";
+                    Toast.makeText(context, text, Toast.LENGTH_LONG).show();
+                }
+            });
         }
     }
 
@@ -266,5 +290,37 @@ public class SingletonClass implements GoogleApiClient.ConnectionCallbacks, Goog
 
     public int getCount() {
         return count;
+    }
+
+    public String getLastActivity() {
+        return lastActivity;
+    }
+
+    public void setLastActivity(String lastActivity) {
+        this.lastActivity = lastActivity;
+    }
+
+    public String getLastAddress() {
+        return lastAddress;
+    }
+
+    public void setLastAddress(String lastAddress) {
+        this.lastAddress = lastAddress;
+    }
+
+    public String getLastNoise() {
+        return lastNoise;
+    }
+
+    public void setLastNoise(String lastNoise) {
+        this.lastNoise = lastNoise;
+    }
+
+    public String getLastTimestamp() {
+        return lastTimestamp;
+    }
+
+    public void setLastTimestamp(String lastTimestamp) {
+        this.lastTimestamp = lastTimestamp;
     }
 }

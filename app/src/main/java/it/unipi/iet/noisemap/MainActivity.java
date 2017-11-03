@@ -17,8 +17,10 @@ import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ImageView;
 import android.widget.TextView;
 
+import it.unipi.iet.noisemap.Services.ActivityRecognizedService;
 import it.unipi.iet.noisemap.Utils.SingletonClass;
 
 public class MainActivity extends AppCompatActivity {
@@ -44,6 +46,8 @@ public class MainActivity extends AppCompatActivity {
 
         //Set the shared preferences for the first time
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        singleton.setServiceRunning(sp.getBoolean("running",  SettingsActivity.DEFAULT_RUNNING));
 
         //Check permissions
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED ||
@@ -59,10 +63,11 @@ public class MainActivity extends AppCompatActivity {
         singleton.scheduleServiceStart(getApplicationContext());
         Log.d(TAG, "Service start has been scheduled");
 
-        SharedPreferences sp  = PreferenceManager.getDefaultSharedPreferences(this);
-        boolean powerSaving = sp.getBoolean("powerSaving", SettingsActivity.DEFAULT_POWER_SAVING);
-        if (!powerSaving)
+        //Unset the receiver if the user doesn't want power management
+        if (!sp.getBoolean("powerSaving", SettingsActivity.DEFAULT_POWER_SAVING)) {
+            Log.d(TAG, "[MYDEBUG] Receiver must be unset");
             singleton.unregisterReceiver();
+        }
     }
 
     public void buttonPress(View v) {
@@ -76,7 +81,7 @@ public class MainActivity extends AppCompatActivity {
         double db = singleton.captureAudio();
         String db_s = String.format("%.1f", db);
         Log.d(TAG, "[MYDEBUG] Noise is "+db_s+"dB");
-        TextView tv = (TextView) findViewById(R.id.text_view);
+        TextView tv = (TextView) findViewById(R.id.textView);
         if (tv != null) {
             tv.setText("Sensed noise is " + db_s + "dB\n");
         }
@@ -141,4 +146,49 @@ public class MainActivity extends AppCompatActivity {
 
         return super.onOptionsItemSelected(item);
     }
+
+    @Override
+    public void onResume() {
+        Log.d(TAG, "onResume");
+        super.onResume();
+
+        TextView tv = (TextView) findViewById(R.id.textView2);
+        if (tv != null) {
+            if (singleton.getLastAddress()==null) {
+                tv.setText("No measurement available. Is the GPS set and the activity recognition enabled?");
+            } else {
+                String text = singleton.getLastTimestamp()+"\n"+singleton.getLastAddress()+" (estimated)\n"
+                        +"Noise: "+singleton.getLastNoise()+"\nActivity: "+singleton.getLastActivity();
+                tv.setText(text);
+            }
+        }
+
+        if (singleton.getLastAddress()!=null) {
+            ImageView image = (ImageView) findViewById(R.id.image);
+            image.setVisibility(View.VISIBLE);
+            switch (singleton.getLastActivity()) {
+                case "in_vehicle":
+                    image.setImageResource(R.drawable.act_in_vehicle);
+                    break;
+                case "on_bicycle":
+                    image.setImageResource(R.drawable.act_on_bycicle);
+                    break;
+                case "on_foot":
+                    image.setImageResource(R.drawable.act_on_foot);
+                    break;
+                case "walking":
+                    image.setImageResource(R.drawable.act_walking);
+                    break;
+                case "running":
+                    image.setImageResource(R.drawable.act_running);
+                    break;
+                case "still":
+                    image.setImageResource(R.drawable.act_still);
+                    break;
+                default:
+                    image.setVisibility(View.INVISIBLE);
+            }
+        }
+    }
+
 }
