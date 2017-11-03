@@ -37,8 +37,9 @@ import it.unipi.iet.noisemap.SettingsActivity;
 public class SingletonClass implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener{
     private final static String TAG = "SingletonClass";
     private static SingletonClass singleton = null;
-
     private Context context;
+
+    //private Context context = null;
     private FirebaseDatabase database = null;
     private AudioRecord audioRecorder = null;
     private GoogleApiClient mApiClient = null;
@@ -46,6 +47,7 @@ public class SingletonClass implements GoogleApiClient.ConnectionCallbacks, Goog
 
     private boolean serviceRunning;
     private boolean receiverSet = true; //by default, it is true as it is in the manifest
+    private String choosenInterval = "";
     private static int count = 0;
     private String lastActivity = null;
     private String lastAddress = null;
@@ -53,6 +55,10 @@ public class SingletonClass implements GoogleApiClient.ConnectionCallbacks, Goog
     private String lastTimestamp = null;
 
     public SingletonClass() {
+    }
+
+    public void setContext(Context c) {
+        context = c;
     }
 
     public static SingletonClass getInstance() {
@@ -73,13 +79,12 @@ public class SingletonClass implements GoogleApiClient.ConnectionCallbacks, Goog
         this.serviceRunning = serviceRunning;
     }
 
-    public void scheduleServiceStart(final Context context) {
+    public void scheduleServiceStart(final Context c) {
         Log.d(TAG, "[MYDEBUG] Service is going to be started\n");
-        this.context = context;
 
         //Connect to GoogleApiClient
         if (mApiClient==null) {
-            mApiClient = new GoogleApiClient.Builder(context)
+            mApiClient = new GoogleApiClient.Builder(c)
                     .addApi(ActivityRecognition.API)
                     .addConnectionCallbacks(this)
                     .addOnConnectionFailedListener(this)
@@ -87,18 +92,20 @@ public class SingletonClass implements GoogleApiClient.ConnectionCallbacks, Goog
             mApiClient.connect();
             Log.d(TAG, "[MYDEBUG] Obtained reference to GoogleApiClient\n");
         } else {
-            if (serviceRunning)
+            SharedPreferences sp =  PreferenceManager.getDefaultSharedPreferences(c);
+            String interval_s = sp.getString("interval", SettingsActivity.DEFAULT_INTERVAL);
+            if (serviceRunning && interval_s.equals(choosenInterval))
                 return;
             serviceRunning = true;
-            Intent intent = new Intent(context, ActivityRecognizedService.class);
-            PendingIntent pendingIntent = PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+            choosenInterval = interval_s;
+            Intent intent = new Intent(c, ActivityRecognizedService.class);
+            PendingIntent pendingIntent = PendingIntent.getService(c, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
             ActivityRecognition.ActivityRecognitionApi.removeActivityUpdates(mApiClient, pendingIntent);
-            SharedPreferences sp =  PreferenceManager.getDefaultSharedPreferences(context);
+
             boolean  running  =  sp.getBoolean("running",  SettingsActivity.DEFAULT_RUNNING);
             if (running) {
-                String is = sp.getString("interval", SettingsActivity.DEFAULT_INTERVAL);
-                long interval = Long.parseLong(is);
-                Log.d(TAG, "Chosen interval="+interval);
+                long interval = Long.parseLong(interval_s);
+                Log.d(TAG, "[MYDEBUG] Chosen interval="+interval);
                 ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(mApiClient, interval, pendingIntent);
                 Log.d(TAG, "[MYDEBUG] Service has been started\n");
                 mHandler.post(new Runnable() {
@@ -112,12 +119,12 @@ public class SingletonClass implements GoogleApiClient.ConnectionCallbacks, Goog
         }
     }
 
-    public void scheduleServiceStop() {
+    public void scheduleServiceStop(final Context c) {
         if (!serviceRunning)
             return;
         serviceRunning = false;
-        Intent intent = new Intent(context, ActivityRecognizedService.class);
-        PendingIntent pendingIntent = PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        Intent intent = new Intent(c, ActivityRecognizedService.class);
+        PendingIntent pendingIntent = PendingIntent.getService(c, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         ActivityRecognition.ActivityRecognitionApi.removeActivityUpdates(mApiClient, pendingIntent);
         Log.d(TAG, "[MYDEBUG] Service has been stopped\n");
         mHandler.post(new Runnable() {
@@ -129,38 +136,46 @@ public class SingletonClass implements GoogleApiClient.ConnectionCallbacks, Goog
         });
     }
 
-    public void registerReceiver() {
+    public void registerReceiver(final Context c) {
         Log.d(TAG, "[MYDEBUG] In registerReceiver");
+        /*if (context==null) {
+            Log.d(TAG, "Setting up context");
+            this.context = context;
+        }*/
         if (receiverSet)
             return;
         receiverSet = true;
-        ComponentName receiver = new ComponentName(context, PowerManagementReceiver.class);
-        PackageManager pm = context.getPackageManager();
+        ComponentName receiver = new ComponentName(c, PowerManagementReceiver.class);
+        PackageManager pm = c.getPackageManager();
         pm.setComponentEnabledSetting(receiver, PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP);
         Log.d(TAG, "[MYDEBUG] Receiver is registered");
         mHandler.post(new Runnable() {
             @Override
             public void run() {
                 CharSequence text = "Power management started";
-                Toast.makeText(context, text, Toast.LENGTH_LONG).show();
+                Toast.makeText(c, text, Toast.LENGTH_LONG).show();
             }
         });
     }
 
-    public void unregisterReceiver() {
+    public void unregisterReceiver(final Context c) {
         Log.d(TAG, "[MYDEBUG] In unregisterReceiver");
+        /*if (context==null) {
+            Log.d(TAG, "Setting up context");
+            this.context = context;
+        }*/
         if (!receiverSet)
             return;
         receiverSet = false;
-        ComponentName receiver = new ComponentName(context, PowerManagementReceiver.class);
-        PackageManager pm = context.getPackageManager();
+        ComponentName receiver = new ComponentName(c, PowerManagementReceiver.class);
+        PackageManager pm = c.getPackageManager();
         pm.setComponentEnabledSetting(receiver, PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
         Log.d(TAG, "[MYDEBUG] Receiver is unregistered");
         mHandler.post(new Runnable() {
             @Override
             public void run() {
                 CharSequence text = "Power management stopped";
-                Toast.makeText(context, text, Toast.LENGTH_LONG).show();
+                Toast.makeText(c, text, Toast.LENGTH_LONG).show();
             }
         });
     }
@@ -256,6 +271,7 @@ public class SingletonClass implements GoogleApiClient.ConnectionCallbacks, Goog
         if (running) {
             serviceRunning = true;
             String is = sp.getString("interval", SettingsActivity.DEFAULT_INTERVAL);
+            choosenInterval = is;
             long interval = Long.parseLong(is);
             Log.d(TAG, "[MYDEBUG] Chosen interval="+interval);
             ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(mApiClient, interval, pendingIntent);

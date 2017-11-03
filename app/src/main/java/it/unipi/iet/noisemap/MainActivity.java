@@ -20,7 +20,6 @@ import android.view.MenuItem;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import it.unipi.iet.noisemap.Services.ActivityRecognizedService;
 import it.unipi.iet.noisemap.Utils.SingletonClass;
 
 public class MainActivity extends AppCompatActivity {
@@ -38,6 +37,7 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG, "onCreate()");
         super.onCreate(savedInstanceState);
 
+        //Set layout, orientation and toolbar
         setContentView(R.layout.activity_main);
         setRequestedOrientation (ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -46,8 +46,7 @@ public class MainActivity extends AppCompatActivity {
 
         //Set the shared preferences for the first time
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        singleton.setServiceRunning(sp.getBoolean("running",  SettingsActivity.DEFAULT_RUNNING));
+        singleton.setContext(getApplicationContext());
 
         //Check permissions
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED ||
@@ -59,14 +58,23 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        //Start the service
-        singleton.scheduleServiceStart(getApplicationContext());
-        Log.d(TAG, "Service start has been scheduled");
-
-        //Unset the receiver if the user doesn't want power management
-        if (!sp.getBoolean("powerSaving", SettingsActivity.DEFAULT_POWER_SAVING)) {
-            Log.d(TAG, "[MYDEBUG] Receiver must be unset");
-            singleton.unregisterReceiver();
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        boolean running = sp.getBoolean("running",  SettingsActivity.DEFAULT_RUNNING);
+        boolean powerSaving = sp.getBoolean("running",  SettingsActivity.DEFAULT_RUNNING);
+        if (running) {
+            singleton.scheduleServiceStart(getApplicationContext());
+            Log.d(TAG, "[MYDEBUG] Service start has been scheduled");
+            if (!powerSaving) {
+                Log.d(TAG, "[MYDEBUG] Receiver must be unset");
+                singleton.unregisterReceiver(getApplicationContext());
+            }
+        } else {
+            Log.d(TAG, "[MYDEBUG] Service is not active");
+            singleton.setServiceRunning(running);
+            if (!powerSaving) {
+                Log.d(TAG, "[MYDEBUG] Receiver must be unset");
+                singleton.unregisterReceiver(getApplicationContext());
+            }
         }
     }
 
@@ -130,7 +138,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-
         int id = item.getItemId();
 
         if (id == R.id.action_settings) {
@@ -149,10 +156,15 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onResume() {
-        Log.d(TAG, "onResume");
+        Log.d(TAG, "[MYDEBUG] onResume");
         super.onResume();
 
-        TextView tv = (TextView) findViewById(R.id.textView2);
+        TextView tv = (TextView) findViewById(R.id.textView);
+        if (tv != null) {
+            tv.setText("");
+        }
+
+        tv = (TextView) findViewById(R.id.textView2);
         if (tv != null) {
             if (singleton.getLastAddress()==null) {
                 tv.setText("No measurement available. Is the GPS set and the activity recognition enabled?");
@@ -167,13 +179,13 @@ public class MainActivity extends AppCompatActivity {
             ImageView image = (ImageView) findViewById(R.id.image);
             image.setVisibility(View.VISIBLE);
             switch (singleton.getLastActivity()) {
-                case "in_vehicle":
+                case "in vehicle":
                     image.setImageResource(R.drawable.act_in_vehicle);
                     break;
-                case "on_bicycle":
+                case "on bicycle":
                     image.setImageResource(R.drawable.act_on_bycicle);
                     break;
-                case "on_foot":
+                case "on foot":
                     image.setImageResource(R.drawable.act_on_foot);
                     break;
                 case "walking":

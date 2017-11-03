@@ -9,4 +9,5 @@
     <string name="power_saving">Enable power saving</string>
     <string name="button_text">GET NOISE NOW!</string>
     <string name="text_title">Last measurement</string>
+    <string name="desc">Activity</string>
 </resources>

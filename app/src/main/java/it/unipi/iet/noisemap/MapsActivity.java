@@ -34,6 +34,7 @@ import com.google.firebase.database.Query;
 
 import java.text.DateFormat;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
 
@@ -143,19 +144,25 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 //Obtain the timestamp
                 String timestamp = value.get("timestamp");
                 float opacity = 0.8f;
+                Date d = null;
                 try {
-                    DateFormat df = DateFormat.getInstance();
-                    Date d = df.parse(timestamp);
-                    double timeDiff = new Date().getTime()-d.getTime();
-                    if (timeDiff>5*24*60*60) {
-                        //it is more than 5 days old
-                        Log.d(TAG, "[MYDEBUG] Very old measurement: more than 5 days old");
-                        return;
-                    } else if (timeDiff>2*24*60*60 && timeDiff<=5*24*60*60)
-                        opacity = 0.5f;
+                    SimpleDateFormat sdfDate = new SimpleDateFormat("EEE, d MMM yyyy, HH:mm:ss");
+                    d = sdfDate.parse(timestamp);
                 } catch (ParseException e) {
                     e.printStackTrace();
                 }
+                if (d==null) {
+                    Log.e(TAG, "[MYDEBUG] Date has not been parsed");
+                    return;
+                }
+                long timeDiff = new Date().getTime()-d.getTime();
+                if (timeDiff>(long)(5*24*60*60*1000)) {
+                    //it is more than 5 days old
+                    Log.d(TAG, "[MYDEBUG] Very old measurement: more than 5 days old");
+                    return;
+                } else if (timeDiff>(long)(2*24*60*60*1000) && timeDiff<=(long)(5*24*60*60*1000))
+                    opacity = 0.5f;
+
 
                 //Obtain the location
                 String coord = value.get("coordinates");
@@ -200,11 +207,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                         .title(timestamp)
                         .snippet("Noise: "+noise+"dB\n"+"Activity: "+activity+"\n"
                         +"Distance from your position: "+(int)distance+"m\n");
-                if (noise>65)
+
+                if (noise>75)
                     opt.icon(BitmapDescriptorFactory.fromResource(R.drawable.circle_red));
-                else if (noise>50 && noise<=65)
+                else if (noise>65 && noise<=75)
+                    opt.icon(BitmapDescriptorFactory.fromResource(R.drawable.circle_orange));
+                else if (noise>40 && noise<=65)
                     opt.icon(BitmapDescriptorFactory.fromResource(R.drawable.circle_yellow));
-                else if (noise<50)
+                else if (noise<40)
                     opt.icon(BitmapDescriptorFactory.fromResource(R.drawable.circle_green));
                 mMap.addMarker(opt);
                 Log.d(TAG, "[MYDEBUG] Marker added");

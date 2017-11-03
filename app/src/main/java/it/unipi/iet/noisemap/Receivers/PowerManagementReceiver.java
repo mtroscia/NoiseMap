@@ -17,7 +17,7 @@ public class PowerManagementReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         if (intent.getAction()==Intent.ACTION_BATTERY_LOW) {
             Log.d(TAG, "[MYDEBUG] Action battery low");
-            singleton.scheduleServiceStop();
+            singleton.scheduleServiceStop(context);
         } else if (intent.getAction()==Intent.ACTION_BATTERY_OKAY) {
             Log.d(TAG, "[MYDEBUG] Action battery ok");
             singleton.scheduleServiceStart(context);

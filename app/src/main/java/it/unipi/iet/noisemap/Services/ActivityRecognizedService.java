@@ -30,7 +30,7 @@ import it.unipi.iet.noisemap.Utils.SingletonClass;
 
 public class ActivityRecognizedService extends IntentService {
     private final String TAG = "ActivityRecognizedServ";
-    private Handler mHandler;
+    //private Handler mHandler;
     private SingletonClass singleton;
 
     public ActivityRecognizedService() {
@@ -91,7 +91,7 @@ public class ActivityRecognizedService extends IntentService {
                         location.getLongitude(),
                         1);
             } catch (IOException ioException) {
-                Log.e(TAG, "[MYDEBUG] Service not available", ioException);
+                Log.e(TAG, "[MYDEBUG] Geocoder service not available", ioException);
             } catch (IllegalArgumentException illegalArgumentException) {
                 Log.e(TAG, "[MYDEBUG] Invalid coordinates" + ". " +
                         "Latitude = " + location.getLatitude() +
@@ -120,7 +120,6 @@ public class ActivityRecognizedService extends IntentService {
             Date date = new Date();
             String strDate = sdfDate.format(date);
 
-            singleton.setLastActivity(activityToString(mostProbableActivity));
             if (!addressFragments.isEmpty()) {
                 String address_s = "";
                 for (int i=0; i<addressFragments.size(); i++)
@@ -133,6 +132,7 @@ public class ActivityRecognizedService extends IntentService {
             String noise_s = String.format("%.1f", noise);
             singleton.setLastNoise(noise_s+"dB");
             singleton.setLastTimestamp(strDate);
+            singleton.setLastActivity(activityToString(mostProbableActivity));
 
             if (activityToString(mostProbableActivity).equals("still"))
                 singleton.incrementCount();

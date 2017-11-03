@@ -16,5 +16,6 @@
         android:key="power_saving"
         android:title="@string/power_saving"
         android:summary="Stop sharing measurements when the phone's battery is getting too low"
+        android:enabled="true"
         android:defaultValue="true" />
 </PreferenceScreen>
