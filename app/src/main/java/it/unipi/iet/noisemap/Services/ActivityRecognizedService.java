@@ -62,12 +62,12 @@ public class ActivityRecognizedService extends IntentService {
             Criteria criteria = new Criteria();
             String provider = locationManager.getBestProvider(criteria, true);
             if (provider==null) {
-                Log.d(TAG, "[MYDEBUG] Provider is null");
+                Log.e(TAG, "[MYDEBUG] Provider is null");
                 return;
             }
             Location location = locationManager.getLastKnownLocation(provider);
             if (location==null) {
-                Log.d(TAG, "[MYDEBUG] No information about the location available");
+                Log.e(TAG, "[MYDEBUG] No information about the location available");
                 return;
             }
 
@@ -106,21 +106,24 @@ public class ActivityRecognizedService extends IntentService {
             double noise = singleton.captureAudio();
 
             //Obtain the timestamp
-            SimpleDateFormat sdfDate = new SimpleDateFormat("EEE, d MMM yyyy, HH:mm:ss");
+            SimpleDateFormat sdfDate = new SimpleDateFormat("EEE, d MMM yyyy, HH:mm:ss", Locale.US);
             Date date = new Date();
             String strDate = sdfDate.format(date);
 
             //Set parameters for last measurement (to be shown into the main)
             if (!addressFragments.isEmpty()) {
-                String address_s = "";
+                StringBuilder address_s = new StringBuilder(150);
                 for (int i=0; i<addressFragments.size(); i++)
-                    if (i!=addressFragments.size()-1)
-                        address_s += addressFragments.get(i)+",";
-                    else
-                        address_s += addressFragments.get(i);
-                singleton.setLastAddress(address_s);
+                    if (i!=addressFragments.size()-1) {
+                        address_s.append(addressFragments.get(i)).append(",");
+                    }
+                    else {
+                        address_s.append(addressFragments.get(i));
+                    }
+                singleton.setLastAddress(address_s.toString());
             }
-            String noise_s = String.format("%.1f", noise);
+            String noise_s = String.format(Locale.US, "%.1f", noise);
+            Log.d(TAG, "[MYDEBUG] Noise="+noise_s);
             singleton.setLastNoise(noise_s+"dB");
             singleton.setLastTimestamp(strDate);
             singleton.setLastActivity(activityToString(mostProbableActivity));
@@ -142,6 +145,10 @@ public class ActivityRecognizedService extends IntentService {
             IntentFilter intentFilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
             Intent batteryStatus = getApplicationContext().registerReceiver(null, intentFilter);
             int status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
+            if (status==-1) {
+                Log.e(TAG, "[MYDEBUG] Status not available");
+                return;
+            }
             if (BatteryManager.BATTERY_STATUS_CHARGING==status || BatteryManager.BATTERY_STATUS_FULL==status) {
                 Log.i(TAG, "[MYDEBUG] Phone is attached to power source");
                 return;

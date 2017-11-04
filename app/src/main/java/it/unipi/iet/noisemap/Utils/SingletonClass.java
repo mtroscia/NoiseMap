@@ -28,6 +28,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.Locale;
 import java.util.Map;
 
 import it.unipi.iet.noisemap.Receivers.PowerManagementReceiver;
@@ -74,8 +75,8 @@ public class SingletonClass implements GoogleApiClient.ConnectionCallbacks, Goog
         }
     }
 
-    public void setServiceRunning(boolean serviceRunning) {
-        this.serviceRunning = serviceRunning;
+    public void setServiceRunningFalse() {
+        this.serviceRunning = false;
     }
 
     public void scheduleServiceStart() {
@@ -212,12 +213,16 @@ public class SingletonClass implements GoogleApiClient.ConnectionCallbacks, Goog
         if (entryRef!=null)
             Log.i(TAG, "[MYDEBUG] Obtained reference to my DB\n");
         DatabaseReference newChild = entryRef.push();
+        if (newChild==null) {
+            Log.e(TAG, "Error when inserting child");
+            return;
+        }
 
         Map<String,String> map = new ArrayMap<>();
         map.put("timestamp", e.getTimestamp());
         String coord = e.getLat()+"-"+e.getLon();
         map.put("coordinates", coord);
-        String noise_s=String.format("%.1f", e.getNoise());
+        String noise_s=String.format(Locale.US, "%.1f", e.getNoise());
         map.put("noise", noise_s);
         map.put("activity", e.getActivity());
         newChild.setValue(map);

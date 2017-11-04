@@ -20,6 +20,8 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import java.util.Locale;
+
 import it.unipi.iet.noisemap.Utils.SingletonClass;
 
 public class MainActivity extends AppCompatActivity {
@@ -42,7 +44,8 @@ public class MainActivity extends AppCompatActivity {
         setRequestedOrientation (ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        getSupportActionBar().setTitle("NoiseMap");
+        if (getSupportActionBar()!=null)
+            getSupportActionBar().setTitle("NoiseMap");
 
         //Set the shared preferences for the first time
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
@@ -70,7 +73,7 @@ public class MainActivity extends AppCompatActivity {
             }
         } else {
             Log.d(TAG, "[MYDEBUG] Service is not active");
-            singleton.setServiceRunning(running);
+            singleton.setServiceRunningFalse();
             if (!powerSaving) {
                 Log.d(TAG, "[MYDEBUG] Receiver must be unset");
                 singleton.unregisterReceiver();
@@ -85,10 +88,11 @@ public class MainActivity extends AppCompatActivity {
 
     public void captureAudio(View v) {
         double db = singleton.captureAudio();
-        String db_s = String.format("%.1f", db);
+        String db_s = String.format(Locale.US, "%.1f", db);
+        String message = "Sensed noise is " + db_s + "dB\n";
         TextView tv = (TextView) findViewById(R.id.textView);
         if (tv != null) {
-            tv.setText("Sensed noise is " + db_s + "dB\n");
+            tv.setText(message);
         }
     }
 
@@ -162,7 +166,8 @@ public class MainActivity extends AppCompatActivity {
         tv = (TextView) findViewById(R.id.textView2);
         if (tv != null) {
             if (singleton.getLastAddress()==null) {
-                tv.setText("No measurement available. Is the GPS set and the activity recognition enabled?");
+                String message = "No measurement available. Is the GPS set and the activity recognition enabled?";
+                tv.setText(message);
             } else {
                 String text = singleton.getLastTimestamp()+"\n"+singleton.getLastAddress()+" (estimated)\n"
                         +"Noise: "+singleton.getLastNoise()+"\nActivity: "+singleton.getLastActivity();

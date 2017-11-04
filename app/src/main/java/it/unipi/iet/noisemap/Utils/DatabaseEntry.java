@@ -1,6 +1,5 @@
 package it.unipi.iet.noisemap.Utils;
 
-
 public class DatabaseEntry {
     private String timestamp;
     private double lat;
@@ -24,43 +23,23 @@ public class DatabaseEntry {
         return s;
     }
 
-    public String getTimestamp() {
+    String getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(String timestamp) {
-        this.timestamp = timestamp;
-    }
-
-    public double getLat() {
+    double getLat() {
         return lat;
     }
 
-    public void setLat(double lat) {
-        this.lat = lat;
-    }
-
-    public double getLon() {
+    double getLon() {
         return lon;
     }
 
-    public void setLon(double lon) {
-        this.lon = lon;
-    }
-
-    public double getNoise() {
+    double getNoise() {
         return noise;
     }
 
-    public void setNoise(double noise) {
-        this.noise = noise;
-    }
-
-    public String getActivity() {
+    String getActivity() {
         return activity;
-    }
-
-    public void setActivity(String activity) {
-        this.activity = activity;
     }
 }

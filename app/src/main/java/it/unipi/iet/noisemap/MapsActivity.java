@@ -35,6 +35,7 @@ import com.google.firebase.database.Query;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 import java.util.Map;
 
 import it.unipi.iet.noisemap.Utils.SingletonClass;
@@ -135,7 +136,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         //Populate the map
         Query query = singleton.retrieveFromDatabase("myDB");
         if (query==null) {
-            Log.w(TAG, "No data has been fund on the DB");
+            Log.w(TAG, "[MYDEBUG] No data has been fund on the DB");
             return;
         }
         query.addChildEventListener(new ChildEventListener() {
@@ -144,7 +145,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 Log.d(TAG, "[MYDEBUG] onChildAdded");
                 Map<String, String> value = (Map<String, String>) dataSnapshot.getValue();
                 if (value==null) {
-                    Log.w(TAG, "Error in retrieving the element");
+                    Log.w(TAG, "[MYDEBUG] Error in retrieving the element");
                     return;
                 }
 
@@ -153,7 +154,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 float opacity = 0.8f;
                 Date d = null;
                 try {
-                    SimpleDateFormat sdfDate = new SimpleDateFormat("EEE, d MMM yyyy, HH:mm:ss");
+                    SimpleDateFormat sdfDate = new SimpleDateFormat("EEE, d MMM yyyy, HH:mm:ss", Locale.US);
                     d = sdfDate.parse(timestamp);
                 } catch (ParseException e) {
                     e.printStackTrace();
@@ -171,13 +172,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     opacity = 0.5f;
 
                 //Obtain the location
-                String coord = value.get("coordinates");
-                String[] latLon = coord.split("-");
-                double latt = Double.parseDouble(latLon[0]);
-                double lonn = Double.parseDouble(latLon[1]);
+                String receivedCoordinates = value.get("coordinates");
+                String[] latLon = receivedCoordinates.split("-");
+                double receivedLat = Double.parseDouble(latLon[0]);
+                double receivedLon = Double.parseDouble(latLon[1]);
                 Location pointPos = new Location("");
-                pointPos.setLatitude(latt);
-                pointPos.setLongitude(lonn);
+                pointPos.setLatitude(receivedLat);
+                pointPos.setLongitude(receivedLon);
                 if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION)
                         != PackageManager.PERMISSION_GRANTED) {
                     Log.w(TAG, "[MYDEBUG] Without permission you can't go on");
@@ -200,11 +201,21 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 String activity = value.get("activity");
 
                 //Obtain the noise
-                double noise = Double.parseDouble(value.get("noise"));
+                double noise;
+                try {
+                    noise = Double.parseDouble(value.get("noise"));
+                } catch (NullPointerException e) {
+                    Log.e(TAG, "Null pointer exception");
+                    return;
+                }
+                catch (NumberFormatException e) {
+                    Log.e(TAG, "Number format exception");
+                    return;
+                }
 
                 //Set the marker
                 MarkerOptions opt = new MarkerOptions()
-                        .position(new LatLng(latt, lonn))
+                        .position(new LatLng(receivedLat, receivedLon))
                         .visible(true)
                         .alpha(opacity)
                         .flat(true)
