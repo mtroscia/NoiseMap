@@ -8,8 +8,8 @@ import android.graphics.Typeface;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationManager;
-import android.support.v4.app.ActivityCompat;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -32,7 +32,6 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.Query;
 
-import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -52,6 +51,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        //Set layout, orientation and toolbar
         setContentView(R.layout.activity_maps);
         setRequestedOrientation (ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar3);
@@ -73,12 +73,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     public void onMapReady(final GoogleMap googleMap) {
-        Log.d(TAG, "[MYDEBUG] In onMapReady()\n");
+        Log.d(TAG, "[MYDEBUG] Map ready");
         mMap = googleMap;
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
-            Log.w(TAG, "[MYDEBUG] Without permission you can't go on\n");
+            Log.w(TAG, "[MYDEBUG] Without permission you can't go on");
             return;
         }
 
@@ -88,21 +88,21 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         Criteria criteria = new Criteria();
         provider = locationManager.getBestProvider(criteria, true);
         Location location = locationManager.getLastKnownLocation(provider);
-        double lat = 0.0, lon = 0.0;
+        double lat, lon;
         if (location != null) {
             lat = location.getLatitude();
             lon = location.getLongitude();
-            Log.d(TAG, "[MYDEBUG] Last location available: " + lat +", "+ lon + "\n");
         } else {
-            Log.d(TAG, "[MYDEBUG] Last location not available\n");
+            Log.w(TAG, "[MYDEBUG] Last location not available");
             return;
         }
 
+        //Customize the map
         mMap.setPadding(0, 200,0,0);
         mMap.getUiSettings().setMyLocationButtonEnabled(true);
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lat, lon), 15.5f));
 
-        //Customize the aspect of the snippet
+        //Customize the aspect of the snippets
         mMap.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
 
             @Override
@@ -112,7 +112,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             @Override
             public View getInfoContents(Marker marker) {
-
                 LinearLayout info = new LinearLayout(getApplicationContext());
                 info.setOrientation(LinearLayout.VERTICAL);
 
@@ -135,11 +134,19 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         //Populate the map
         Query query = singleton.retrieveFromDatabase("myDB");
+        if (query==null) {
+            Log.w(TAG, "No data has been fund on the DB");
+            return;
+        }
         query.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
                 Log.d(TAG, "[MYDEBUG] onChildAdded");
                 Map<String, String> value = (Map<String, String>) dataSnapshot.getValue();
+                if (value==null) {
+                    Log.w(TAG, "Error in retrieving the element");
+                    return;
+                }
 
                 //Obtain the timestamp
                 String timestamp = value.get("timestamp");
@@ -158,11 +165,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 long timeDiff = new Date().getTime()-d.getTime();
                 if (timeDiff>(long)(5*24*60*60*1000)) {
                     //it is more than 5 days old
-                    Log.d(TAG, "[MYDEBUG] Very old measurement: more than 5 days old");
+                    Log.i(TAG, "[MYDEBUG] Very old measurement: more than 5 days old");
                     return;
                 } else if (timeDiff>(long)(2*24*60*60*1000) && timeDiff<=(long)(5*24*60*60*1000))
                     opacity = 0.5f;
-
 
                 //Obtain the location
                 String coord = value.get("coordinates");
@@ -174,19 +180,19 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 pointPos.setLongitude(lonn);
                 if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION)
                         != PackageManager.PERMISSION_GRANTED) {
-                    Log.w(TAG, "[MYDEBUG] Without permission you can't go on\n");
+                    Log.w(TAG, "[MYDEBUG] Without permission you can't go on");
                     return;
                 }
 
                 Location myPos = locationManager.getLastKnownLocation(provider);
                 if (myPos == null) {
-                    Log.d(TAG, "[MYDEBUG] Last location not available");
+                    Log.w(TAG, "[MYDEBUG] Last location not available");
                     return;
                 }
                 float distance = myPos.distanceTo(pointPos);
                 if (distance>5000) {
                     //distance in metres
-                    Log.d(TAG, "[MYDEBUG] Very far point: more than 5Km far");
+                    Log.i(TAG, "[MYDEBUG] Very far point: more than 5Km far");
                     return;
                 }
 
@@ -196,9 +202,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 //Obtain the noise
                 double noise = Double.parseDouble(value.get("noise"));
 
-                Log.d(TAG, "[MYDEBUG] Retrieved values are " + timestamp + " "+latt +"-" + lonn +
-                        " " + noise + "dB " + activity);
-
+                //Set the marker
                 MarkerOptions opt = new MarkerOptions()
                         .position(new LatLng(latt, lonn))
                         .visible(true)
@@ -207,7 +211,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                         .title(timestamp)
                         .snippet("Noise: "+noise+"dB\n"+"Activity: "+activity+"\n"
                         +"Distance from your position: "+(int)distance+"m\n");
-
                 if (noise>75)
                     opt.icon(BitmapDescriptorFactory.fromResource(R.drawable.circle_red));
                 else if (noise>65 && noise<=75)
@@ -243,30 +246,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     @Override
-    protected void onPause() {
-        Log.d(TAG, "[DEBUG] onPause\n");
-        super.onPause();
-    }
-
-    @Override
-    protected void onResume() {
-        Log.d(TAG, "[DEBUG] onResume\n");
-        super.onResume();
-    }
-
-    @Override
-    protected void onDestroy(){
-        Log.d(TAG, "[DEBUG] onDestroy\n");
-        super.onDestroy();
-    }
-
-    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // handle arrow click here
         if (item.getItemId() == android.R.id.home) {
-            finish(); // close this activity and return to preview activity (if there is any)
+            // close this activity and return to preview activity (if there is any)
+            finish();
         }
-
         return super.onOptionsItemSelected(item);
     }
 }

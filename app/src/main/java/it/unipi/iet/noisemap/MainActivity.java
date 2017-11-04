@@ -14,9 +14,9 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -51,7 +51,7 @@ public class MainActivity extends AppCompatActivity {
         //Check permissions
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED ||
                 ActivityCompat.checkSelfPermission(this, android.Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED)  {
-            Log.i(TAG, "[MYDEBUG] No permission granted\n");
+            Log.i(TAG, "[MYDEBUG] No permission granted");
             ActivityCompat.requestPermissions(this,
                     new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.RECORD_AUDIO},
                     MY_PERMISSIONS_REQUEST_ALL);
@@ -62,33 +62,30 @@ public class MainActivity extends AppCompatActivity {
         boolean running = sp.getBoolean("running",  SettingsActivity.DEFAULT_RUNNING);
         boolean powerSaving = sp.getBoolean("running",  SettingsActivity.DEFAULT_RUNNING);
         if (running) {
-            singleton.scheduleServiceStart(getApplicationContext());
+            singleton.scheduleServiceStart();
             Log.d(TAG, "[MYDEBUG] Service start has been scheduled");
             if (!powerSaving) {
                 Log.d(TAG, "[MYDEBUG] Receiver must be unset");
-                singleton.unregisterReceiver(getApplicationContext());
+                singleton.unregisterReceiver();
             }
         } else {
             Log.d(TAG, "[MYDEBUG] Service is not active");
             singleton.setServiceRunning(running);
             if (!powerSaving) {
                 Log.d(TAG, "[MYDEBUG] Receiver must be unset");
-                singleton.unregisterReceiver(getApplicationContext());
+                singleton.unregisterReceiver();
             }
         }
     }
 
     public void buttonPress(View v) {
-        Log.d(TAG, "[MYDEBUG] In buttonPress()");
         Intent intent = new Intent(this, MapsActivity.class);
         startActivity(intent);
     }
 
     public void captureAudio(View v) {
-        Log.d(TAG, "[MYDEBUG] In captureAudio()");
         double db = singleton.captureAudio();
         String db_s = String.format("%.1f", db);
-        Log.d(TAG, "[MYDEBUG] Noise is "+db_s+"dB");
         TextView tv = (TextView) findViewById(R.id.textView);
         if (tv != null) {
             tv.setText("Sensed noise is " + db_s + "dB\n");
@@ -141,12 +138,10 @@ public class MainActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         if (id == R.id.action_settings) {
-            Log.d(TAG, "[MYDEBUG] Settings has been selected");
             Intent intent = new Intent(this, SettingsActivity.class);
             startActivity(intent);
             return true;
         } else if (id == R.id.action_close) {
-            Log.d(TAG, "[MYDEBUG] Close has been selected");
             finish();
             return true;
         }

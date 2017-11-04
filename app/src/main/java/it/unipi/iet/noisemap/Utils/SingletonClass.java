@@ -39,9 +39,7 @@ public class SingletonClass implements GoogleApiClient.ConnectionCallbacks, Goog
     private static SingletonClass singleton = null;
     private Context context;
 
-    //private Context context = null;
     private FirebaseDatabase database = null;
-    private AudioRecord audioRecorder = null;
     private GoogleApiClient mApiClient = null;
     private Handler mHandler = new Handler();
 
@@ -54,7 +52,7 @@ public class SingletonClass implements GoogleApiClient.ConnectionCallbacks, Goog
     private String lastNoise = null;
     private String lastTimestamp = null;
 
-    public SingletonClass() {
+    private SingletonClass() {
     }
 
     public void setContext(Context c) {
@@ -62,6 +60,7 @@ public class SingletonClass implements GoogleApiClient.ConnectionCallbacks, Goog
     }
 
     public static SingletonClass getInstance() {
+        //Return the instance of the singleton class
         if (singleton==null)
             singleton = new SingletonClass();
         return singleton;
@@ -71,7 +70,7 @@ public class SingletonClass implements GoogleApiClient.ConnectionCallbacks, Goog
         //Connect to Firebase
         if (database==null) {
             database = FirebaseDatabase.getInstance();
-            Log.d(TAG, "[MYDEBUG] Obtained reference to Firebase\n");
+            Log.i(TAG, "[MYDEBUG] Obtained reference to Firebase\n");
         }
     }
 
@@ -79,33 +78,37 @@ public class SingletonClass implements GoogleApiClient.ConnectionCallbacks, Goog
         this.serviceRunning = serviceRunning;
     }
 
-    public void scheduleServiceStart(final Context c) {
+    public void scheduleServiceStart() {
         Log.d(TAG, "[MYDEBUG] Service is going to be started\n");
 
-        //Connect to GoogleApiClient
         if (mApiClient==null) {
-            mApiClient = new GoogleApiClient.Builder(c)
+            /*It is the first time the function is called: a connection with the GoogleApi client
+            must be established*/
+            mApiClient = new GoogleApiClient.Builder(context)
                     .addApi(ActivityRecognition.API)
                     .addConnectionCallbacks(this)
                     .addOnConnectionFailedListener(this)
                     .build();
             mApiClient.connect();
-            Log.d(TAG, "[MYDEBUG] Obtained reference to GoogleApiClient\n");
+            Log.i(TAG, "[MYDEBUG] Obtained reference to GoogleApiClient\n");
+            /*Operation is completed into the onConnected() method to be sure that the
+            connection has been established */
         } else {
-            SharedPreferences sp =  PreferenceManager.getDefaultSharedPreferences(c);
+            SharedPreferences sp =  PreferenceManager.getDefaultSharedPreferences(context);
             String interval_s = sp.getString("interval", SettingsActivity.DEFAULT_INTERVAL);
-            if (serviceRunning && interval_s.equals(choosenInterval))
+            if (serviceRunning && interval_s.equals(choosenInterval)) {
+                Log.d(TAG, "[MYDEBUG] The service is already running\n");
                 return;
+            }
             serviceRunning = true;
             choosenInterval = interval_s;
-            Intent intent = new Intent(c, ActivityRecognizedService.class);
-            PendingIntent pendingIntent = PendingIntent.getService(c, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+            Intent intent = new Intent(context, ActivityRecognizedService.class);
+            PendingIntent pendingIntent = PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
             ActivityRecognition.ActivityRecognitionApi.removeActivityUpdates(mApiClient, pendingIntent);
 
             boolean  running  =  sp.getBoolean("running",  SettingsActivity.DEFAULT_RUNNING);
             if (running) {
                 long interval = Long.parseLong(interval_s);
-                Log.d(TAG, "[MYDEBUG] Chosen interval="+interval);
                 ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(mApiClient, interval, pendingIntent);
                 Log.d(TAG, "[MYDEBUG] Service has been started\n");
                 mHandler.post(new Runnable() {
@@ -119,12 +122,14 @@ public class SingletonClass implements GoogleApiClient.ConnectionCallbacks, Goog
         }
     }
 
-    public void scheduleServiceStop(final Context c) {
-        if (!serviceRunning)
+    public void scheduleServiceStop() {
+        if (!serviceRunning) {
+            Log.d(TAG, "[MYDEBUG] The service has already been stopped\n");
             return;
+        }
         serviceRunning = false;
-        Intent intent = new Intent(c, ActivityRecognizedService.class);
-        PendingIntent pendingIntent = PendingIntent.getService(c, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        Intent intent = new Intent(context, ActivityRecognizedService.class);
+        PendingIntent pendingIntent = PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         ActivityRecognition.ActivityRecognitionApi.removeActivityUpdates(mApiClient, pendingIntent);
         Log.d(TAG, "[MYDEBUG] Service has been stopped\n");
         mHandler.post(new Runnable() {
@@ -136,56 +141,49 @@ public class SingletonClass implements GoogleApiClient.ConnectionCallbacks, Goog
         });
     }
 
-    public void registerReceiver(final Context c) {
-        Log.d(TAG, "[MYDEBUG] In registerReceiver");
-        /*if (context==null) {
-            Log.d(TAG, "Setting up context");
-            this.context = context;
-        }*/
-        if (receiverSet)
+    public void registerReceiver() {
+        if (receiverSet) {
+            Log.d(TAG, "[MYDEBUG] The receiver is already set\n");
             return;
+        }
         receiverSet = true;
-        ComponentName receiver = new ComponentName(c, PowerManagementReceiver.class);
-        PackageManager pm = c.getPackageManager();
+        ComponentName receiver = new ComponentName(context, PowerManagementReceiver.class);
+        PackageManager pm = context.getPackageManager();
         pm.setComponentEnabledSetting(receiver, PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP);
         Log.d(TAG, "[MYDEBUG] Receiver is registered");
         mHandler.post(new Runnable() {
             @Override
             public void run() {
                 CharSequence text = "Power management started";
-                Toast.makeText(c, text, Toast.LENGTH_LONG).show();
+                Toast.makeText(context, text, Toast.LENGTH_LONG).show();
             }
         });
     }
 
-    public void unregisterReceiver(final Context c) {
-        Log.d(TAG, "[MYDEBUG] In unregisterReceiver");
-        /*if (context==null) {
-            Log.d(TAG, "Setting up context");
-            this.context = context;
-        }*/
-        if (!receiverSet)
+    public void unregisterReceiver() {
+        if (!receiverSet) {
+            Log.d(TAG, "[MYDEBUG] The receiver has already been stopped\n");
             return;
+        }
         receiverSet = false;
-        ComponentName receiver = new ComponentName(c, PowerManagementReceiver.class);
-        PackageManager pm = c.getPackageManager();
+        ComponentName receiver = new ComponentName(context, PowerManagementReceiver.class);
+        PackageManager pm = context.getPackageManager();
         pm.setComponentEnabledSetting(receiver, PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
         Log.d(TAG, "[MYDEBUG] Receiver is unregistered");
         mHandler.post(new Runnable() {
             @Override
             public void run() {
                 CharSequence text = "Power management stopped";
-                Toast.makeText(c, text, Toast.LENGTH_LONG).show();
+                Toast.makeText(context, text, Toast.LENGTH_LONG).show();
             }
         });
     }
 
     public double captureAudio() {
-        Log.d(TAG, "[MYDEBUG] In captureAudio()");
         int bufferSize = AudioRecord.getMinBufferSize(44100, AudioFormat.CHANNEL_IN_DEFAULT,
                 AudioFormat.ENCODING_PCM_16BIT);
         bufferSize = bufferSize*4;
-        audioRecorder = new AudioRecord(MediaRecorder.AudioSource.MIC,
+        AudioRecord audioRecorder = new AudioRecord(MediaRecorder.AudioSource.MIC,
                 44100, AudioFormat.CHANNEL_IN_DEFAULT, AudioFormat.ENCODING_PCM_16BIT, bufferSize);
         short data [] = new short[bufferSize];
         audioRecorder.startRecording();
@@ -206,17 +204,14 @@ public class SingletonClass implements GoogleApiClient.ConnectionCallbacks, Goog
          The value 51805.5336 can be derived from assuming that x=32767=0.6325Pa and
          x=1=0.00002Pa (the reference value) */
         double pressure = measurement/51805.5336;
-        double db = (20 * Math.log10(pressure/0.00002));
-        return db;
+        return (20 * Math.log10(pressure/0.00002));
     }
 
     public void insertIntoDatabase(String databaseName, DatabaseEntry e) {
-        Log.d(TAG, "[MYDEBUG] In insertIntoDatabase\n");
         DatabaseReference entryRef = database.getReference(databaseName);
         if (entryRef!=null)
-            Log.d(TAG, "[MYDEBUG] Obtained reference to my DB\n");
+            Log.i(TAG, "[MYDEBUG] Obtained reference to my DB\n");
         DatabaseReference newChild = entryRef.push();
-        Log.d(TAG, "[MYDEBUG] New child");
 
         Map<String,String> map = new ArrayMap<>();
         map.put("timestamp", e.getTimestamp());
@@ -226,56 +221,48 @@ public class SingletonClass implements GoogleApiClient.ConnectionCallbacks, Goog
         map.put("noise", noise_s);
         map.put("activity", e.getActivity());
         newChild.setValue(map);
-        Log.d(TAG, "[MYDEBUG] Entry is set");
 
         entryRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 /* This method is called once with the initial value and again
                    whenever data at this location is updated. */
-                Log.d(TAG, "[MYDEBUG] onDataChange");
+                Log.d(TAG, "[MYDEBUG] Entry has been added");
             }
 
             @Override
             public void onCancelled(DatabaseError error) {
                 // Failed to read value
-                Log.d(TAG, "[MYDEBUG] onCancelled");
                 Log.w(TAG, "[MYDEBUG] Failed to read value", error.toException());
             }
         });
     }
 
     public Query retrieveFromDatabase(String databaseName) {
-        Log.d(TAG, "[MYDEBUG] in retrieveFromDatabase");
         DatabaseReference entryRef = database.getReference(databaseName);
         if (entryRef==null) {
-            Log.d(TAG, "[MYDEBUG] Not obtained reference to my DB\n");
+            Log.w(TAG, "[MYDEBUG] Reference to my DB has not been obtained\n");
             return null;
         }
         Log.d(TAG, "[MYDEBUG] Obtained reference to my DB\n");
-        Query query = entryRef.orderByChild("timestamp");
-        Log.d(TAG, "[MYDEBUG] Return query\n");
-        return query;
+        return entryRef.orderByChild("timestamp");
     }
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
-        //This method is invoked when the connection with the GoogleApiClient is complete.
-        Log.d(TAG, "[MYDEBUG] onConnected\n");
+        Log.i(TAG, "Connection with GoogleApi client has been established");
+        //This method is invoked when the connection with the GoogleApiClient is complete
         Intent intent = new Intent(context, ActivityRecognizedService.class);
         PendingIntent pendingIntent = PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-
-        // [REDUCE COMPUTATIONS WHILE DEBUGGING]
         SharedPreferences sp =  PreferenceManager.getDefaultSharedPreferences(context);
         boolean  running  =  sp.getBoolean("running",  SettingsActivity.DEFAULT_RUNNING);
         if (running) {
             serviceRunning = true;
-            String is = sp.getString("interval", SettingsActivity.DEFAULT_INTERVAL);
-            choosenInterval = is;
-            long interval = Long.parseLong(is);
-            Log.d(TAG, "[MYDEBUG] Chosen interval="+interval);
+            String interval_s = sp.getString("interval", SettingsActivity.DEFAULT_INTERVAL);
+            choosenInterval = interval_s;
+            long interval = Long.parseLong(interval_s);
             ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(mApiClient, interval, pendingIntent);
-            Log.d(TAG, "[MYDEBUG] Service has been started\n");
+            Log.i(TAG, "[MYDEBUG] Service has been started");
             mHandler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -288,20 +275,18 @@ public class SingletonClass implements GoogleApiClient.ConnectionCallbacks, Goog
 
     @Override
     public void onConnectionSuspended(int i) {
-        Log.d(TAG, "[MYDEBUG] onConnectionSuspended\n");
     }
 
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-        Log.d(TAG, "[MYDEBUG] onConnectionFailed\n");
     }
 
     public void incrementCount() {
         count++;
     }
 
-    public void setCount(int c) {
-        count = c;
+    public void resetCount() {
+        count = 0;
     }
 
     public int getCount() {

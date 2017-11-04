@@ -3,9 +3,7 @@ package it.unipi.iet.noisemap;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
-import android.preference.CheckBoxPreference;
 import android.preference.PreferenceFragment;
-import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.MenuItem;
@@ -13,7 +11,6 @@ import android.view.MenuItem;
 import it.unipi.iet.noisemap.Utils.SingletonClass;
 
 public class SettingsActivity extends AppCompatActivity {
-    private final String TAG = "SettingsActivity";
     public static boolean DEFAULT_RUNNING = true;
     public static String DEFAULT_INTERVAL = "300000";
     public static boolean DEFAULT_POWER_SAVING = true;
@@ -21,7 +18,6 @@ public class SettingsActivity extends AppCompatActivity {
 
     @Override
     protected  void  onCreate(Bundle savedInstanceState)  {
-        Log.d(TAG, "[MYDEBUG] onCreate()");
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_settings);
@@ -43,14 +39,13 @@ public class SettingsActivity extends AppCompatActivity {
 
         @Override
         public void onCreate(final Bundle savedInstanceState) {
-            Log.d(TAG, "[MYDEBUG] onCreate()");
             super.onCreate(savedInstanceState);
 
-            //Load the preferences from an XML resource
+            //Load the preferences from the XML resource
             addPreferencesFromResource(R.xml.preferences);
 
             getPreferenceManager().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
-            
+
             SharedPreferences  sp =  getPreferenceManager().getSharedPreferences();
             boolean  running  =  sp.getBoolean("running",  SettingsActivity.DEFAULT_RUNNING);
             if (!running)  {
@@ -62,33 +57,32 @@ public class SettingsActivity extends AppCompatActivity {
             Log.d(TAG,  "[MYDEBUG] Preference changed");
             SharedPreferences  sp =  getPreferenceManager().getSharedPreferences();
             boolean  running  =  sp.getBoolean("running",  SettingsActivity.DEFAULT_RUNNING);
+            boolean powerSaving = sp.getBoolean("power_saving", SettingsActivity.DEFAULT_POWER_SAVING);
             if (running)  {
                 Log.d(TAG, "[MYDEBUG] Schedule service start");
                 getPreferenceScreen().findPreference("power_saving").setEnabled(true);
-                singleton.scheduleServiceStart(getActivity());
+                singleton.scheduleServiceStart();
             } else {
                 Log.d(TAG, "[MYDEBUG] Schedule service stop");
                 getPreferenceScreen().findPreference("power_saving").setEnabled(false);
-                singleton.scheduleServiceStop(getActivity());
+                singleton.scheduleServiceStop();
             }
-            boolean powerSaving = sp.getBoolean("power_saving", SettingsActivity.DEFAULT_POWER_SAVING);
             if (powerSaving) {
                 Log.d(TAG, "[MYDEBUG] Enable power management");
-                singleton.registerReceiver(getActivity());
+                singleton.registerReceiver();
             } else {
                 Log.d(TAG, "[MYDEBUG] Disable power management");
-                singleton.unregisterReceiver(getActivity());
+                singleton.unregisterReceiver();
             }
         }
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // handle arrow click here
         if (item.getItemId() == android.R.id.home) {
-            finish(); // close this activity and return to preview activity (if there is any)
+            // close this activity and return to preview activity (if there is any)
+            finish();
         }
-
         return super.onOptionsItemSelected(item);
     }
 
