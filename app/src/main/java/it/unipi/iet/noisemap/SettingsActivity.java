@@ -68,12 +68,14 @@ public class SettingsActivity extends AppCompatActivity {
                 getPreferenceScreen().findPreference("power_saving").setEnabled(false);
                 singleton.scheduleServiceStop();
             }
-            if (powerSaving) {
-                Log.d(TAG, "[MYDEBUG] Enable power management");
-                singleton.registerReceiver();
-            } else {
-                Log.d(TAG, "[MYDEBUG] Disable power management");
-                singleton.unregisterReceiver();
+            if (getPreferenceScreen().findPreference("power_saving").isEnabled()) {
+                if (powerSaving) {
+                    Log.d(TAG, "[MYDEBUG] Enable power management");
+                    singleton.registerReceiver();
+                } else {
+                    Log.d(TAG, "[MYDEBUG] Disable power management");
+                    singleton.unregisterReceiver();
+                }
             }
         }
     }

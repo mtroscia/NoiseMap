@@ -119,6 +119,8 @@ public class SingletonClass implements GoogleApiClient.ConnectionCallbacks, Goog
                         Toast.makeText(context, text, Toast.LENGTH_LONG).show();
                     }
                 });
+                if (sp.getBoolean("power_saving", SettingsActivity.DEFAULT_POWER_SAVING))
+                    registerReceiver();
             }
         }
     }
@@ -140,6 +142,7 @@ public class SingletonClass implements GoogleApiClient.ConnectionCallbacks, Goog
                 Toast.makeText(context, text, Toast.LENGTH_LONG).show();
             }
         });
+        unregisterReceiver();
     }
 
     public void registerReceiver() {
@@ -151,6 +154,7 @@ public class SingletonClass implements GoogleApiClient.ConnectionCallbacks, Goog
         ComponentName receiver = new ComponentName(context, PowerManagementReceiver.class);
         PackageManager pm = context.getPackageManager();
         pm.setComponentEnabledSetting(receiver, PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP);
+
         Log.d(TAG, "[MYDEBUG] Receiver is registered");
         mHandler.post(new Runnable() {
             @Override

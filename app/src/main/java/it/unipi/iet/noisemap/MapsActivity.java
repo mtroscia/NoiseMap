@@ -228,7 +228,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     opt.icon(BitmapDescriptorFactory.fromResource(R.drawable.circle_orange));
                 else if (noise>40 && noise<=65)
                     opt.icon(BitmapDescriptorFactory.fromResource(R.drawable.circle_yellow));
-                else if (noise<40)
+                else //noise<=40
                     opt.icon(BitmapDescriptorFactory.fromResource(R.drawable.circle_green));
                 mMap.addMarker(opt);
                 Log.d(TAG, "[MYDEBUG] Marker added");

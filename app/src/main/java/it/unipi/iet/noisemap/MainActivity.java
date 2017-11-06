@@ -63,7 +63,7 @@ public class MainActivity extends AppCompatActivity {
 
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         boolean running = sp.getBoolean("running",  SettingsActivity.DEFAULT_RUNNING);
-        boolean powerSaving = sp.getBoolean("running",  SettingsActivity.DEFAULT_RUNNING);
+        boolean powerSaving = sp.getBoolean("power_saving", SettingsActivity.DEFAULT_POWER_SAVING);
         if (running) {
             singleton.scheduleServiceStart();
             Log.d(TAG, "[MYDEBUG] Service start has been scheduled");
@@ -74,10 +74,8 @@ public class MainActivity extends AppCompatActivity {
         } else {
             Log.d(TAG, "[MYDEBUG] Service is not active");
             singleton.setServiceRunningFalse();
-            if (!powerSaving) {
-                Log.d(TAG, "[MYDEBUG] Receiver must be unset");
-                singleton.unregisterReceiver();
-            }
+            Log.d(TAG, "[MYDEBUG] Receiver must be unset");
+            singleton.unregisterReceiver();
         }
     }
 
